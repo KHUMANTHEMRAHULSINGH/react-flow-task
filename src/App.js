@@ -1,12 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import ReactFlow, {
-  MiniMap,
-  Controls,
-  Background,
   addEdge,
-  useNodesState,
-  useEdgesState,
-  ReactFlowProvider,
+  Background,
+  Controls,
+  MiniMap
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import Sidebar from './Sidebar';
@@ -16,43 +13,32 @@ const nodeTypes = {
   custom: CustomNode,
 };
 
-const initialNodes = [];
-const initialEdges = [];
+const App = () => {
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
 
-let id = 0;
-const getId = () => `node_${id++}`;
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
 
-function FlowCanvas() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
-
-  const onConnect = useCallback((params) => {
-    const sourceNode = nodes.find(n => n.id === params.source);
-    const targetNode = nodes.find(n => n.id === params.target);
-
-    if (sourceNode?.data.type === 'blockA' && targetNode?.data.type === 'blockB') {
-      setEdges(eds => addEdge(params, eds));
-    } else {
-      alert('Only Block A to Block B connections allowed');
-    }
-  }, [nodes]);
-
-  const onDrop = useCallback(event => {
+  const onDrop = useCallback((event) => {
     event.preventDefault();
     const type = event.dataTransfer.getData('application/reactflow');
-    const position = reactFlowInstance.project({
-      x: event.clientX - 200,
-      y: event.clientY - 100,
-    });
+    const position = { x: event.clientX - 200, y: event.clientY }; // Adjust x to not overlap Sidebar
     const newNode = {
-      id: getId(),
+      id: `${+new Date()}`,
       type: 'custom',
       position,
-      data: { label: type === 'blockA' ? 'Block A' : 'Block B', type },
+      data: { label: `${type}` },
     };
-    setNodes(nds => nds.concat(newNode));
-  }, [reactFlowInstance]);
+    setNodes((nds) => nds.concat(newNode));
+  }, []);
+
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    []
+  );
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
@@ -61,13 +47,10 @@ function FlowCanvas() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onInit={setReactFlowInstance}
-          nodeTypes={nodeTypes}
           onDrop={onDrop}
-          onDragOver={event => event.preventDefault()}
+          onDragOver={onDragOver}
+          nodeTypes={nodeTypes}
           fitView
         >
           <MiniMap />
@@ -77,13 +60,8 @@ function FlowCanvas() {
       </div>
     </div>
   );
-}
+};
 
-export default function App() {
-  return (
-    <ReactFlowProvider>
-      <FlowCanvas />
-    </ReactFlowProvider>
-  );
-}
+export default App;
+
 
