@@ -25,12 +25,12 @@ const App = () => {
   const onDrop = useCallback((event) => {
     event.preventDefault();
     const type = event.dataTransfer.getData('application/reactflow');
-    const position = { x: event.clientX - 200, y: event.clientY }; // Adjust x to not overlap Sidebar
+    const position = { x: event.clientX - 200, y: event.clientY }; // Adjust for sidebar
     const newNode = {
       id: `${+new Date()}`,
       type: 'custom',
       position,
-      data: { label: `${type}` },
+      data: { label: `${type}`, type },
     };
     setNodes((nds) => nds.concat(newNode));
   }, []);
