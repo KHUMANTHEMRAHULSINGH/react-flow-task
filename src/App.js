@@ -1,9 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
-  addEdge,
-  Background,
-  Controls,
   MiniMap,
+  Controls,
+  Background,
+  addEdge,
   useNodesState,
   useEdgesState,
   ReactFlowProvider,
@@ -11,6 +11,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import Sidebar from './Sidebar';
 import CustomNode from './CustomNode';
+import './App.css';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -19,79 +20,106 @@ const nodeTypes = {
 let id = 0;
 const getId = () => `node_${id++}`;
 
-const FlowCanvas = () => {
+function FlowCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null); // To store context menu position
 
-  const onConnect = useCallback((params) => {
-    const sourceNode = nodes.find(n => n.id === params.source);
-    const targetNode = nodes.find(n => n.id === params.target);
+  // Allow connection only from blockA to blockB
+  const onConnect = useCallback(
+    (params) => {
+      const source = nodes.find((n) => n.id === params.source);
+      const target = nodes.find((n) => n.id === params.target);
 
-    const valid =
-      (sourceNode?.data?.type === 'blockA' && targetNode?.data?.type === 'blockB') ||
-      (sourceNode?.data?.type === 'blockB' && targetNode?.data?.type === 'blockA');
+      if (source && target) {
+        if (source.data.type === 'blockA' && target.data.type === 'blockB') {
+          setEdges((eds) => addEdge(params, eds));
+        } else {
+          alert('Only connections from Block A to Block B are allowed');
+        }
+      }
+    },
+    [nodes, setEdges]
+  );
 
-    if (valid) {
-      setEdges((eds) => addEdge(params, eds));
-    } else {
-      alert('Only Block A to B or B to A connections allowed');
-    }
-  }, [nodes]);
+  // When block is dropped from sidebar
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+      const type = event.dataTransfer.getData('application/reactflow');
 
-  const onDrop = useCallback((event) => {
-    event.preventDefault();
-    const type = event.dataTransfer.getData('application/reactflow');
+      if (!type || !reactFlowInstance) return;
 
-    const position = reactFlowInstance.project({
-      x: event.clientX - 250,
-      y: event.clientY - 100,
-    });
+      const position = reactFlowInstance.project({
+        x: event.clientX - 200,
+        y: event.clientY - 100,
+      });
 
-    const newNode = {
-      id: getId(),
-      type: 'custom',
-      position,
-      data: { label: type === 'blockA' ? 'Block A' : 'Block B', type },
-    };
+      const newNode = {
+        id: getId(),
+        type: 'custom',
+        position,
+        data: {
+          label: type === 'blockA' ? 'Block A' : 'Block B',
+          type,
+        },
+      };
 
-    setNodes((nds) => nds.concat(newNode));
-  }, [reactFlowInstance]);
+      setNodes((nds) => nds.concat(newNode));
+    },
+    [reactFlowInstance, setNodes]
+  );
 
-  const onDragOver = useCallback((event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+  // Right-click on the canvas to show Hello World
+  const onCanvasContextMenu = useCallback((e) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
   }, []);
 
-  const onNodeClick = useCallback((event, node) => {
-    alert('Hello World');
+  // Hide context menu when clicking anywhere
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
   }, []);
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       <Sidebar />
-      <div style={{ flexGrow: 1 }}>
+      <div
+        style={{ flexGrow: 1, position: 'relative' }}
+        onContextMenu={onCanvasContextMenu}
+      >
         <ReactFlow
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          nodeTypes={nodeTypes}
-          onNodeClick={onNodeClick}
           onInit={setReactFlowInstance}
+          onDrop={onDrop}
+          onDragOver={(event) => event.preventDefault()}
+          nodeTypes={nodeTypes}
           fitView
         >
           <MiniMap />
           <Controls />
           <Background />
         </ReactFlow>
+
+        {contextMenu && (
+          <div
+            className="context-menu-overlay"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+          >
+            Hello World
+          </div>
+        )}
       </div>
     </div>
   );
-};
+}
 
 export default function App() {
   return (
@@ -100,6 +128,8 @@ export default function App() {
     </ReactFlowProvider>
   );
 }
+
+
 
 
 

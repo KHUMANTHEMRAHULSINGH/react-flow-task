@@ -1,0 +1,17 @@
+.sidebar {
+  width: 150px;
+  padding: 10px;
+  background: #f4f4f4;
+  border-right: 1px solid #ccc;
+}
+
+.dndnode {
+  padding: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #555;
+  border-radius: 5px;
+  cursor: grab;
+  background: #fff;
+  text-align: center;
+  font-weight: bold;
+}

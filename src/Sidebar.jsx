@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import blocks from './blocks.json'; // import local JSON file
+import './Sidebar.css';
 
 const Sidebar = () => {
-  const [blockList, setBlockList] = useState([]);
+  const [blocks, setBlocks] = useState([]);
 
   useEffect(() => {
-    setBlockList(blocks); // set block list from JSON
+    fetch('/blocks.json')
+      .then((res) => res.json())
+      .then((data) => setBlocks(data))
+      .catch((err) => console.error("Failed to load blocks:", err));
   }, []);
 
   const onDragStart = (event, type) => {
@@ -14,13 +17,13 @@ const Sidebar = () => {
   };
 
   return (
-    <aside style={{ width: 150, padding: 10, backgroundColor: '#f0f0f0' }}>
-      {blockList.map(block => (
+    <aside className="sidebar">
+      {blocks.map((block) => (
         <div
           key={block.id}
+          className="dndnode"
+          onDragStart={(event) => onDragStart(event, block.type)}
           draggable
-          onDragStart={e => onDragStart(e, block.id)}
-          style={{ marginBottom: 10, cursor: 'grab' }}
         >
           {block.label}
         </div>

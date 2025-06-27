@@ -1,21 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Handle, Position } from 'reactflow';
 import './CustomNode.css';
 
 const CustomNode = ({ data }) => {
-  const [showHello, setShowHello] = useState(false);
-
-  const handleClick = () => {
-    setShowHello(!showHello);
-  };
-
   return (
-    <div className="custom-node" onClick={handleClick}>
-      <strong>{data.label}</strong>
-      {showHello && (
-        <div className="hello-box">Hello World</div>
-      )}
+    <div className="custom-node">
       <Handle type="target" position={Position.Top} />
+      <div>{data.label}</div>
       <Handle type="source" position={Position.Bottom} />
     </div>
   );
